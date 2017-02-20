@@ -23,11 +23,14 @@
 #include "fd.hpp"
 #include "guard.hpp"
 #include "pty.hpp"
+#include "linux.hpp"
 
 // TODO : mettre les externes qui vont bien
 // TODO : refactoring
 // TODO : send to git
 // TODO : handle key
+// FIXME : do not work well with htop
+// FIXME : handle arrow key
 
 void my_handler(int)
 {
@@ -93,7 +96,7 @@ int main()
     if (fd) {
         bool run = true;
 
-        char b, c;
+        char buf_stdin, buf_master;
         auto const& master = fd->as_int();
 
         timeval tv{ 1, 100000 };
@@ -108,20 +111,30 @@ int main()
             FD::set(STDIN_FILENO, io_fd.read);
             FD::select(master + 1, io_fd.read, io_fd.write, io_fd.except, tv);
 
+            // Talk to the shell
             if (FD::isset(master, io_fd.read)) {
-                if (read(master, &c, 1) != -1)
-                    write(STDOUT_FILENO, &c, 1);
+                if (read(master, &buf_master, 1) != -1)
+                    write(STDOUT_FILENO, &buf_master, 1);
                 else
                     run = false;
             }
 
+            // Talk to stdin
             if (FD::isset(STDIN_FILENO, io_fd.read)) {
-                if (read(STDIN_FILENO, &b, 1) == 0) {
-                    b = EOF;
-                    write(master, &b, 1);
+                if (read(STDIN_FILENO, &buf_stdin, 1) == 0) {
+                    buf_stdin = EOF;
+                    write(master, &buf_stdin, 1);
                     return 0;
                 }
-                write(master, &b, 1);
+                switch (buf_stdin) {
+                    case char(linux::special_key::up):
+                    case char(linux::special_key::down):
+                    case char(linux::special_key::left):
+                    case char(linux::special_key::right):
+                    case char(linux::special_key::escape):
+                    default:
+                        write(master, &buf_stdin, 1);
+                }
             }
             auto end_ = std::chrono::steady_clock::now();
             auto elapsed = end_ - begin_;

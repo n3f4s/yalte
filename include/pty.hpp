@@ -12,6 +12,7 @@
 namespace pty {
 /// openty wrapper c++ wrapper, takes reference instead of ptr and throw if fail
 // don't work with std::string because std::string::c_str() returns a const char* and not char*
+// TODO : replace char* by std::unique_ptr
 std::string _concat_string(char* r, char* l);
 std::string _concat_string(const char* r, char* l);
 void openpty(int& master, int& slave);
