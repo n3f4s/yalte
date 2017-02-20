@@ -363,6 +363,7 @@ int main()
         // FIXME : find a way to avoid taking 100% of a CPU
         auto loop_time = 0.1ms;
         while (run) {
+            // run = false;
             auto begin_ = std::chrono::steady_clock::now();
             stdio_fd_set io_fd;
 
@@ -373,20 +374,9 @@ int main()
             // Talk to the shell
             if (FD::isset(master, io_fd.read)) {
                 if (read(master, &buf_master, 1) != -1) {
-                    // write(STDOUT_FILENO, &buf_master, 1);
-                    switch (buf_stdin) {
-                        case char(linux::special_key::up):
-                        case char(linux::special_key::down):
-                        case char(linux::special_key::left):
-                        case char(linux::special_key::right):
-                        case char(linux::special_key::escape):
-                            break;
-                        default:
-                            write(STDOUT_FILENO, &buf_master, 1);
-                    }
+                    // run = true;
+                    write(STDOUT_FILENO, &buf_master, 1);
                     log_out << char_rep[int(buf_master)] << '\n';
-                    // if (std::isgraph(buf_master)) { log_out << buf_master << '\n'; }
-                    // else                          { log_out << int(buf_master) << '\n'; }
                 } else {
                     run = false;
                 }
@@ -400,15 +390,7 @@ int main()
                     return 0;
                 }
                 log_in << char_rep[int(buf_stdin)];
-                switch (buf_stdin) {
-                    case char(linux::special_key::up):
-                    case char(linux::special_key::down):
-                    case char(linux::special_key::left):
-                    case char(linux::special_key::right):
-                    case char(linux::special_key::escape):
-                    default:
-                        write(master, &buf_stdin, 1);
-                }
+                write(master, &buf_stdin, 1);
             }
             auto end_ = std::chrono::steady_clock::now();
             auto elapsed = end_ - begin_;
