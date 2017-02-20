@@ -9,6 +9,8 @@
 #include <string>
 #include <thread>
 #include <utility>
+#include <fstream> // FIXME for logging
+#include <cctype>
 
 // UNIX includes
 #include <cstdlib>
@@ -61,6 +63,261 @@ struct stdio_fd_set {
     FD::Set except;
 };
 
+constexpr char const* const char_rep[] = { "NUL",
+    "SOH",
+    "STX",
+    "ETX",
+    "EOT",
+    "ENQ",
+    "ACK",
+    "BEL",
+    "BS",
+    "TAB",
+    // "LF",
+    "\n",
+    "VT",
+    "FF",
+    // "CR",
+    "\r",
+    "SO",
+    "SI",
+    "DLE",
+    "DC1",
+    "DC2",
+    "DC3",
+    "DC4",
+    "NAK",
+    "SYN",
+    "ETB",
+    "CAN",
+    "EM",
+    "SUB",
+    "ESC",
+    "FS",
+    "GS",
+    "RS",
+    "US",
+    "(space)",
+    "!",
+    "\"",
+    "#",
+    "$",
+    "%",
+    "&",
+    "'",
+    "(",
+    ")",
+    "*",
+    "+",
+    ",",
+    "-",
+    ".",
+    "/",
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    ":",
+    ";",
+    "<",
+    "=",
+    ">",
+    "?",
+    "@",
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V",
+    "W",
+    "X",
+    "Y",
+    "Z",
+    "[",
+    "\\",
+    "]",
+    "^",
+    "_",
+    "`",
+    "a",
+    "b",
+    "c",
+    "d",
+    "e",
+    "f",
+    "g",
+    "h",
+    "i",
+    "j",
+    "k",
+    "l",
+    "m",
+    "n",
+    "o",
+    "p",
+    "q",
+    "r",
+    "s",
+    "t",
+    "u",
+    "v",
+    "w",
+    "x",
+    "y",
+    "z",
+    "{",
+    "|",
+    "}",
+    "~",
+    "DEL",
+    "€",
+    "NOTHING",
+    "‚",
+    "ƒ",
+    "„",
+    "…",
+    "†",
+    "‡",
+    "ˆ",
+    "‰",
+    "Š",
+    "‹",
+    "Œ",
+    "Ž",
+    "‘",
+    "’",
+    "“",
+    "”",
+    "•",
+    "–",
+    "—",
+    "˜",
+    "™",
+    "š",
+    "›",
+    "œ",
+    "ž",
+    "Ÿ",
+    "¡",
+    "¢",
+    "£",
+    "¤",
+    "¥",
+    "¦",
+    "§",
+    "¨",
+    "©",
+    "ª",
+    "«",
+    "¬",
+    "­",
+    "®",
+    "¯",
+    "°",
+    "±",
+    "²",
+    "³",
+    "´",
+    "µ",
+    "¶",
+    "·",
+    "¸",
+    "¹",
+    "º",
+    "»",
+    "¼",
+    "½",
+    "¾",
+    "¿",
+    "À",
+    "Á",
+    "Â",
+    "Ã",
+    "Ä",
+    "Å",
+    "Æ",
+    "Ç",
+    "È",
+    "É",
+    "Ê",
+    "Ë",
+    "Ì",
+    "Í",
+    "Î",
+    "Ï",
+    "Ð",
+    "Ñ",
+    "Ò",
+    "Ó",
+    "Ô",
+    "Õ",
+    "Ö",
+    "×",
+    "Ø",
+    "Ù",
+    "Ú",
+    "Û",
+    "Ü",
+    "Ý",
+    "Þ",
+    "ß",
+    "à",
+    "á",
+    "â",
+    "ã",
+    "ä",
+    "å",
+    "æ",
+    "ç",
+    "è",
+    "é",
+    "ê",
+    "ë",
+    "ì",
+    "í",
+    "î",
+    "ï",
+    "ð",
+    "ñ",
+    "ò",
+    "ó",
+    "ô",
+    "õ",
+    "ö",
+    "÷",
+    "ø",
+    "ù",
+    "ú",
+    "û",
+    "ü",
+    "ý",
+    "þ",
+    "ÿ"
+};
+
 int main()
 {
     // Disable echo on STDIN; data sent to
@@ -93,10 +350,12 @@ int main()
 
     auto fd = pty::fork_term();
 
+    std::ofstream log_in{"./tmp-in.log"};
+    std::ofstream log_out{"./tmp-out.log"};
     if (fd) {
         bool run = true;
 
-        char buf_stdin, buf_master;
+        unsigned char buf_stdin, buf_master;
         auto const& master = fd->as_int();
 
         timeval tv{ 1, 100000 };
@@ -113,10 +372,24 @@ int main()
 
             // Talk to the shell
             if (FD::isset(master, io_fd.read)) {
-                if (read(master, &buf_master, 1) != -1)
-                    write(STDOUT_FILENO, &buf_master, 1);
-                else
+                if (read(master, &buf_master, 1) != -1) {
+                    // write(STDOUT_FILENO, &buf_master, 1);
+                    switch (buf_stdin) {
+                        case char(linux::special_key::up):
+                        case char(linux::special_key::down):
+                        case char(linux::special_key::left):
+                        case char(linux::special_key::right):
+                        case char(linux::special_key::escape):
+                            break;
+                        default:
+                            write(STDOUT_FILENO, &buf_master, 1);
+                    }
+                    log_out << char_rep[int(buf_master)] << '\n';
+                    // if (std::isgraph(buf_master)) { log_out << buf_master << '\n'; }
+                    // else                          { log_out << int(buf_master) << '\n'; }
+                } else {
                     run = false;
+                }
             }
 
             // Talk to stdin
@@ -126,6 +399,7 @@ int main()
                     write(master, &buf_stdin, 1);
                     return 0;
                 }
+                log_in << char_rep[int(buf_stdin)];
                 switch (buf_stdin) {
                     case char(linux::special_key::up):
                     case char(linux::special_key::down):
