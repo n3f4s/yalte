@@ -14,6 +14,8 @@ Yalte is a toy emulator. The purpose of this project is to learn how emulator wo
 
 ## Features / TODO list
 
-- [  ] Signal management 
-    - [  ] freeze/kill the command instead of the shell
-- [  ]
+- [ ] Signal management 
+    - [ ] freeze/kill the command instead of the shell
+- [ ] Make sure that the terminal does not consume too much processing power
+- [ ] GUI
+- [ ] Configuration file
