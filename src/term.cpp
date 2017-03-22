@@ -376,7 +376,7 @@ int main()
                 if (read(master, &buf_master, 1) != -1) {
                     // run = true;
                     write(STDOUT_FILENO, &buf_master, 1);
-                    log_out << char_rep[int(buf_master)] << '\n';
+                    log_out << char_rep[int(buf_master)] << std::endl;
                 } else {
                     run = false;
                 }
@@ -389,7 +389,7 @@ int main()
                     write(master, &buf_stdin, 1);
                     return 0;
                 }
-                log_in << char_rep[int(buf_stdin)];
+                log_in << char_rep[int(buf_stdin)] << std::flush;
                 write(master, &buf_stdin, 1);
             }
             auto end_ = std::chrono::steady_clock::now();
