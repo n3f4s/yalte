@@ -340,7 +340,7 @@ int main()
         [&oldt, &newt]() {
             tcgetattr(STDIN_FILENO, &oldt);
             newt = oldt;
-            newt.c_oflag &= ~(ECHO | ECHONL | ICANON);
+            newt.c_lflag &= ~(ECHO | ECHONL | ICANON);
             tcsetattr(STDIN_FILENO, TCSAFLUSH, &newt);
         },
         [&oldt]() {
