@@ -1,16 +1,10 @@
 // C++ includes
-#include <chrono>
-#include <chrono>
-#include <cstring>
 #include <iostream>
 #include <memory>
 #include <numeric>
-#include <stdexcept>
 #include <string>
-#include <thread>
 #include <utility>
 #include <fstream> // FIXME for logging
-#include <cctype>
 #include <experimental/optional>
 
 // UNIX includes
@@ -39,22 +33,6 @@
 // ctrl+\ => SIGQUIT
 // ctrl+t => SIGINFO
 
-// TODO : mettre les externes qui vont bien
-// TODO : refactoring
-// TODO : send to git
-// TODO : handle key
-// FIXME : do not work well with htop
-// FIXME : handle arrow key
-// FIXME : forward signal to shell
-// FIXME : find a way to avoid taking 100% of a CPU (resolv with waiting with select ?)
-// FIXME : better debug logging
-
-void my_handler(int)
-{
-    // std::cout << "Exiting\n";
-    exit(1);
-}
-
 // TODO : généraliser en split
 std::string get_shell_name(std::string const& path)
 {
@@ -71,12 +49,6 @@ std::string get_shell_name(std::string const& path)
 }
 
 using namespace std::literals;
-
-struct stdio_fd_set {
-    FD::Set read;
-    FD::Set write;
-    FD::Set except;
-};
 
 // TODO : clean code
 

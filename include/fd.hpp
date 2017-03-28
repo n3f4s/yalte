@@ -8,6 +8,7 @@ extern "C" {
 
 using std::experimental::optional;
 namespace FD {
+
 class FileDescriptor {
 public:
     FileDescriptor(int fd, bool closeable = true) noexcept;
@@ -28,6 +29,7 @@ private:
     int file_desc;
     bool is_closeable;
 };
+
 class Set {
 public:
     Set()
@@ -50,3 +52,9 @@ void select(int fd, Set& read, Set& write, Set& except, timeval& tv);
 void select(int fd, optional<Set>& read, optional<Set>& write, optional<Set>& except, timeval& tv);
 bool isset(int fd, Set const& set);
 }
+
+struct stdio_fd_set {
+    FD::Set read;
+    FD::Set write;
+    FD::Set except;
+};
