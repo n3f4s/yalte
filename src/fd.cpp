@@ -56,7 +56,7 @@ void select(int fd, optional<Set>& read, optional<Set>& write, optional<Set>& ex
 {
     ::select(fd + 1, read ? &read->set : nullptr, write ? &write->set : nullptr, except ? &except->set : nullptr, &tv);
 }
-bool isset(int fd, Set& set)
+bool isset(int fd, Set const& set)
 {
     return FD_ISSET(fd, &set.set);
 }

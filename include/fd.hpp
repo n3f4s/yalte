@@ -41,12 +41,12 @@ private:
     friend void select(int fd, Set& read, Set& write, Set& except);
     friend void select(int fd, optional<Set>& read, optional<Set>& write, optional<Set>& except, timeval& tv);
     friend void select(int fd, Set& read, Set& write, Set& except, timeval& tv);
-    friend bool isset(int fd, Set& set);
+    friend bool isset(int fd, Set const& set);
     fd_set set;
 };
 void set(int fd, Set& set);
 void select(int fd, Set& read, Set& write, Set& except);
 void select(int fd, Set& read, Set& write, Set& except, timeval& tv);
 void select(int fd, optional<Set>& read, optional<Set>& write, optional<Set>& except, timeval& tv);
-bool isset(int fd, Set& set);
+bool isset(int fd, Set const& set);
 }
