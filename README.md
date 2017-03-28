@@ -16,7 +16,8 @@ The end result should be a light terminal emulator with the the minimal required
 
 ## Features / TODO list
 
-- [ ] Handle special key
+- [ ] Clean code and TODO list (regroup stray TODO, ...)
+- [ ] Handle special key (WIP)
 - [ ] Signal management 
     - [ ] freeze/kill the command instead of the shell
 - [ ] Make sure that the terminal does not consume too much processing power
