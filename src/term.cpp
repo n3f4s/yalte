@@ -25,7 +25,9 @@
 #include "guard.hpp"
 #include "pty.hpp"
 #include "linux.hpp"
+#ifndef NDEBUG
 #include "debug.hpp"
+#endif
 
 #ifndef ASCII_DEBUG
 #define ASCII_DEBUG(val)
