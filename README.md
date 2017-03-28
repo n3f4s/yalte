@@ -28,3 +28,4 @@ The end result should be a light terminal emulator with the the minimal required
 - [ ] Make sure that the terminal does not consume too much processing power
 - [ ] GUI
 - [ ] Configuration file
+- [ ] Make it work with GUI like htop
