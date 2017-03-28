@@ -44,6 +44,10 @@ void set(int fd, Set& set)
 {
     FD_SET(fd, &(set.set));
 }
+void select(int fd, Set& read, Set& write, Set& except)
+{
+    ::select(fd + 1, &read.set, &write.set, &except.set, nullptr);
+}
 void select(int fd, Set& read, Set& write, Set& except, timeval& tv)
 {
     ::select(fd + 1, &read.set, &write.set, &except.set, &tv);
