@@ -25,6 +25,11 @@
 #include "guard.hpp"
 #include "pty.hpp"
 #include "linux.hpp"
+#include "debug.hpp"
+
+#ifndef ASCII_DEBUG
+#define ASCII_DEBUG(val)
+#endif /* ifndef ASCII_DEBUG(val) */
 
 // TODO : mettre les externes qui vont bien
 // TODO : refactoring
