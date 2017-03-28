@@ -2,6 +2,7 @@
 
 #include <string>
 #include <experimental/optional>
+#include <utility>
 
 #include <pty.h>
 
@@ -25,5 +26,5 @@ void openpty(int& master, int& slave, char* name, winsize& winp);
 void openpty(int& master, int& slave, termios& termp, winsize& winp);
 
 
-optional<FD::FileDescriptor> fork_term();
+optional<std::pair<FD::FileDescriptor, pid_t>> fork_term();
 }

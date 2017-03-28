@@ -58,7 +58,7 @@ void openpty(int& master, int& slave, termios& termp, winsize& winp)
     if (::openpty(&master, &slave, nullptr, &termp, &winp) != 0)
         throw std::runtime_error(_concat_string("opentty failed", strerror(errno)));
 }
-optional<FD::FileDescriptor> fork_term()
+optional<std::pair<FD::FileDescriptor, pid_t>> fork_term()
 {
     FD::FileDescriptor master{ 0 };
     FD::FileDescriptor slave{ 0 };
@@ -74,11 +74,11 @@ optional<FD::FileDescriptor> fork_term()
         dup2(slave.as_int(), STDIN_FILENO);
         dup2(slave.as_int(), STDOUT_FILENO);
         dup2(slave.as_int(), STDERR_FILENO);
-        return optional<FD::FileDescriptor>{};
+        return optional<std::pair<FD::FileDescriptor, pid_t>>{};
     default:
         // TODO : handle sigchld signal
-        return optional<FD::FileDescriptor>(std::move(master));
+        return optional<std::pair<FD::FileDescriptor, pid_t>>({std::move(master), pid});
     }
-    return optional<FD::FileDescriptor>{};
+    return optional<std::pair<FD::FileDescriptor, pid_t>>{};
 }
 }

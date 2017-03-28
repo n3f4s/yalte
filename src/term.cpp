@@ -356,7 +356,7 @@ int main()
         bool run = true;
 
         unsigned char buf_stdin, buf_master;
-        auto const& master = fd->as_int();
+        auto const& master = fd->first.as_int();
 
         timeval tv{ 1, 100000 };
         // FIXME : forward signal to shell
@@ -388,6 +388,10 @@ int main()
                     buf_stdin = EOF;
                     write(master, &buf_stdin, 1);
                     return 0;
+                }
+                if(buf_stdin == 'Q') {
+                    buf_stdin = 24;
+                    kill(fd->second, SIGINT);
                 }
                 log_in << char_rep[int(buf_stdin)] << std::flush;
                 write(master, &buf_stdin, 1);
