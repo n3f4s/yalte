@@ -85,7 +85,7 @@ int main()
     // termios oldt; // Make a good C++ interface
     // termios newt;
     linux::termios term{STDIN_FILENO};
-    term.c_oflag &= ~(ECHO | ECHONL | ICANON);
+    term.c_lflag &= ~(ECHO | ECHONL | ICANON);
     linux::tcsetattr(STDIN_FILENO, TCSAFLUSH, term);
 
     auto fd = pty::fork_term();
