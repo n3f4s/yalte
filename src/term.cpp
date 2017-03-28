@@ -11,6 +11,7 @@
 #include <utility>
 #include <fstream> // FIXME for logging
 #include <cctype>
+#include <experimental/optional>
 
 // UNIX includes
 #include <cstdlib>
@@ -32,6 +33,11 @@
 #ifndef ASCII_DEBUG
 #define ASCII_DEBUG(val)
 #endif /* ifndef ASCII_DEBUG(val) */
+
+// ctrl+c => SIGINT
+// ctrl+z => SIGTSTP
+// ctrl+\ => SIGQUIT
+// ctrl+t => SIGINFO
 
 // TODO : mettre les externes qui vont bien
 // TODO : refactoring
@@ -74,6 +80,51 @@ struct stdio_fd_set {
 
 // TODO : clean code
 
+std::ofstream log_in{"./tmp-in.log"};
+std::ofstream log_out{"./tmp-out.log"};
+
+pid_t shell_pid;
+
+bool talk_to_shell(int master, stdio_fd_set const& fds) {
+    if(!FD::isset(master, fds.read)) return true;
+    unsigned char buf;
+    if(read(master, &buf, 1) == -1) return false;
+    write(STDOUT_FILENO, &buf, 1);
+    return true;
+}
+
+std::experimental::optional<unsigned char> parse_stdin(unsigned char buf) {
+    switch (buf) {
+        case 'Q':
+            kill(shell_pid, SIGINT);
+            return {};
+        default:
+            return buf;
+    }
+    return {};
+}
+
+bool talk_to_stdin(int master, stdio_fd_set const& fds) {
+    if(!FD::isset(STDIN_FILENO, fds.read)) return true;
+    unsigned char buf;
+    switch (read(STDIN_FILENO, &buf, 1)) {
+        case -1:
+            return false;
+            break;
+        case 0:
+            buf = EOF;
+            write(master, &buf, 1);
+            return false;
+            break;
+        default:
+            log_in << ASCII_DEBUG(buf);
+            if(auto buf_ = parse_stdin(buf)) { // FIXME can parse_stdin makes the terminal exit ?
+                write(master, &(*buf_), 1);
+            }
+            return true;
+    }
+}
+
 int main()
 {
     struct sigaction sigIntHandler; // FIXME maybe C++ify sigaction
@@ -84,21 +135,17 @@ int main()
 
     sigaction(SIGINT, &sigIntHandler, NULL);
 
-    // termios oldt; // Make a good C++ interface
-    // termios newt;
     linux::termios term{STDIN_FILENO};
     term.c_lflag &= ~(ECHO | ECHONL | ICANON);
     linux::tcsetattr(STDIN_FILENO, TCSAFLUSH, term);
 
     auto fd = pty::fork_term();
 
-    std::ofstream log_in{"./tmp-in.log"};
-    std::ofstream log_out{"./tmp-out.log"};
     if (fd) {
         bool run = true;
 
-        unsigned char buf_stdin, buf_master;
         auto const& master = fd->first.as_int();
+        shell_pid = fd->second;
 
         while (run) {
             stdio_fd_set io_fd;
@@ -108,32 +155,10 @@ int main()
             FD::select(master + 1, io_fd.read, io_fd.write, io_fd.except);
 
             // Talk to the shell
-            if (FD::isset(master, io_fd.read)) {
-                if (read(master, &buf_master, 1) != -1) {
-                    write(STDOUT_FILENO, &buf_master, 1);
-                    log_out << ASCII_DEBUG(buf_master) << std::flush;
-                } else {
-                    run = false;
-                }
-            }
+            run = talk_to_shell(master, io_fd);
 
             // Talk to stdin
-            if (FD::isset(STDIN_FILENO, io_fd.read)) {
-                if (read(STDIN_FILENO, &buf_stdin, 1) == 0) {
-                    buf_stdin = EOF;
-                    write(master, &buf_stdin, 1);
-                    return 0;
-                }
-                if(buf_stdin == 'Q') {
-                    //buf_stdin = 24;
-                    //buf_stdin = '\0';
-                    kill(fd->second, SIGINT);
-                }
-                else {
-                    write(master, &buf_stdin, 1);
-                }
-                log_in << ASCII_DEBUG(buf_stdin);
-            }
+            run &= talk_to_stdin(master, io_fd);
         }
     } else {
         const std::string shell_path = "/bin/bash"; //getenv("SHELL");
