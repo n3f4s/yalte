@@ -390,11 +390,14 @@ int main()
                     return 0;
                 }
                 if(buf_stdin == 'Q') {
-                    buf_stdin = 24;
+                    //buf_stdin = 24;
+                    //buf_stdin = '\0';
                     kill(fd->second, SIGINT);
                 }
+                else {
+                    write(master, &buf_stdin, 1);
+                }
                 log_in << char_rep[int(buf_stdin)] << std::flush;
-                write(master, &buf_stdin, 1);
             }
             auto end_ = std::chrono::steady_clock::now();
             auto elapsed = end_ - begin_;
