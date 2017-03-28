@@ -16,9 +16,13 @@ The end result should be a light terminal emulator with the the minimal required
 
 ## Features / TODO list
 
+(Not in order !)
+
+- [ ] Good C++-ification of C function/types
 - [ ] Clean code and TODO list (regroup stray TODO, ...)
 - [ ] Handle special key (WIP)
-- [ ] Signal management 
+- [ ] Handle UTF-8
+- [ ] Signal management
     - [ ] freeze/kill the command instead of the shell
     - [ ] handle child process
 - [ ] Make sure that the terminal does not consume too much processing power
