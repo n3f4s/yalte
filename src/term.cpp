@@ -97,15 +97,24 @@ bool talk_to_stdin(int master, stdio_fd_set const& fds) {
     }
 }
 
+bool cont = false;
+void forward_signal(int sig) {
+    kill(shell_pid, sig);
+    cont = true;
+}
+
+
 int main()
 {
     struct sigaction sigIntHandler; // FIXME maybe C++ify sigaction
 
-    sigIntHandler.sa_handler = my_handler;
+    sigIntHandler.sa_handler = forward_signal;
     sigemptyset(&sigIntHandler.sa_mask);
     sigIntHandler.sa_flags = 0;
 
-    sigaction(SIGINT, &sigIntHandler, NULL);
+    for(auto sig : { SIGINT, SIGTSTP, SIGQUIT }) {
+        sigaction(sig, &sigIntHandler, NULL);
+    }
 
     linux::termios term{STDIN_FILENO};
     term.c_lflag &= ~(ECHO | ECHONL | ICANON);
@@ -126,11 +135,16 @@ int main()
             FD::set(STDIN_FILENO, io_fd.read);
             FD::select(master + 1, io_fd.read, io_fd.write, io_fd.except);
 
+            if(cont) {
+                cont = false;
+                continue;
+            }
             // Talk to the shell
             run = talk_to_shell(master, io_fd);
 
             // Talk to stdin
             run &= talk_to_stdin(master, io_fd);
+            cont = false;
         }
     } else {
         const std::string shell_path = "/bin/bash"; //getenv("SHELL");
