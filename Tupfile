@@ -1,0 +1,23 @@
+#The Target Binary Program
+TARGET        := term
+
+#Compiler
+CC            := g++
+
+#The Directories, Source, Includes, Objects, Binary and Resources
+SRCDIR        := src
+INCDIR        := include
+BUILDDIR      := obj
+TARGETDIR     := bin
+DOCDIR        := doc
+
+#Flags, Libraries and Includes
+CXXFLAGS       += -Wall -Wextra -std=c++1z -pedantic -Wshadow -fdiagnostics-color=auto -I $(INCDIR)
+CXXFLAGS_DEBUG += -g -Og -fsanitize=address -D_GLIBCXX_DEBUG -fsanitize=undefined
+CXXFLAGS_PROD  += -O2 -DNDEBUG -flto
+CPPFLAGS       +=
+LDFLAGS        += -s -flto
+LDLIBS         += -lutil -fsanitize=address -fsanitize=undefined
+
+:foreach $(SRCDIR)/*.cpp |> $(CC) $(CXXFLAGS) $(CXXFLAGS_DEBUG) -c -o %o %f |> $(BUILDDIR)/%B.o {obj}
+:{obj} |> $(CC) %f -o %o $(LDLIBS) |> $(TARGETDIR)/$(TARGET)
