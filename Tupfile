@@ -19,5 +19,10 @@ CPPFLAGS       +=
 LDFLAGS        += -s -flto
 LDLIBS         += -lutil -fsanitize=address -fsanitize=undefined
 
+# TODO : split debug/release
+# TODO : make/remove build dir 
+# TODO : check with makefile to see if there is some things missing
+# TODO : run executable
+
 :foreach $(SRCDIR)/*.cpp |> $(CC) $(CXXFLAGS) $(CXXFLAGS_DEBUG) -c -o %o %f |> $(BUILDDIR)/%B.o {obj}
 :{obj} |> $(CC) %f -o %o $(LDLIBS) |> $(TARGETDIR)/$(TARGET)
