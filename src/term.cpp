@@ -4,6 +4,7 @@
 #include <numeric>
 #include <string>
 #include <utility>
+#include <thread>
 #include <fstream> // FIXME for logging
 #include <experimental/optional>
 
@@ -12,6 +13,7 @@
 #include <pty.h>
 #include <signal.h>
 #include <sys/time.h>
+#include <sys/signalfd.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -28,7 +30,7 @@
 #define ASCII_DEBUG(val)
 #endif /* ifndef ASCII_DEBUG(val) */
 
-// ctrl+c => SIGINT
+// ctrl+c => SIGINT => ascii char 3
 // ctrl+z => SIGTSTP
 // ctrl+\ => SIGQUIT
 // ctrl+t => SIGINFO
@@ -99,22 +101,46 @@ bool talk_to_stdin(int master, stdio_fd_set const& fds) {
 
 bool cont = false;
 void forward_signal(int sig) {
-    kill(shell_pid, sig);
+    kill(-1*shell_pid, sig);
     cont = true;
 }
 
 
 int main()
 {
-    struct sigaction sigIntHandler; // FIXME maybe C++ify sigaction
+    //struct sigaction sigIntHandler; // FIXME maybe C++ify sigaction
 
-    sigIntHandler.sa_handler = forward_signal;
-    sigemptyset(&sigIntHandler.sa_mask);
-    sigIntHandler.sa_flags = 0;
+    //sigIntHandler.sa_handler = forward_signal;
+    //sigemptyset(&sigIntHandler.sa_mask);
+    //sigIntHandler.sa_flags = 0;
 
-    for(auto sig : { SIGINT, SIGTSTP, SIGQUIT }) {
-        sigaction(sig, &sigIntHandler, NULL);
-    }
+    //for(auto sig : { SIGINT, SIGTSTP, SIGQUIT }) {
+        //sigaction(sig, &sigIntHandler, NULL);
+    //}
+    //------------------------------
+	int sfd;
+	sigset_t mask;
+ 
+	/* We will handle SIGTERM and SIGINT. */
+	sigemptyset (&mask);
+        for(auto sig : { SIGINT, SIGTSTP, SIGQUIT }) {
+            sigaddset (&mask, sig);
+        }
+ 
+	/* Block the signals thet we handle using signalfd(), so they don't
+	 * cause signal handlers or default signal actions to execute. */
+	if (sigprocmask(SIG_BLOCK, &mask, NULL) < 0) {
+		perror ("sigprocmask");
+		return 1;
+	}
+ 
+	/* Create a file descriptor from which we will read the signals. */
+	sfd = signalfd (-1, &mask, 0);
+	if (sfd < 0) {
+		perror ("signalfd");
+		return 1;
+	}
+    //------------------------------
 
     linux::termios term{STDIN_FILENO};
     term.c_lflag &= ~(ECHO | ECHONL | ICANON);
@@ -133,10 +159,13 @@ int main()
 
             FD::set(master, io_fd.read);
             FD::set(STDIN_FILENO, io_fd.read);
+            FD::set(sfd, io_fd.read);
             FD::select(master + 1, io_fd.read, io_fd.write, io_fd.except);
 
             if(cont) {
                 cont = false;
+                std::cout << "kill(" << shell_pid << ", " << "signal)" << std::endl;
+                std::this_thread::sleep_for(2s);
                 continue;
             }
             // Talk to the shell
@@ -144,8 +173,40 @@ int main()
 
             // Talk to stdin
             run &= talk_to_stdin(master, io_fd);
+            if(FD::isset(sfd, io_fd.read)) {
+                //------------------------------
+                /** The buffor for read(), this structure contains information
+		 * about the signal we've read. */
+		struct signalfd_siginfo si;
+ 
+		ssize_t res;
+ 
+		res = read (sfd, &si, sizeof(si));
+ 
+		if (res < 0) {
+			perror ("read");
+			return 1;
+		}
+		if (res != sizeof(si)) {
+			fprintf (stderr, "Something wrong\n");
+			return 1;
+		}
+ 
+		if (si.ssi_signo == SIGINT) {
+                    unsigned char tmp = 3;
+                    printf("Got SIGINT, writing %d\n", tmp);
+                    write(master, &tmp, 1);
+                    cont = true;
+                    continue;
+		} else {
+			fprintf (stderr, "Got some unhandled signal %d\n", si.ssi_signo);
+			return 1;
+		}
+                //------------------------------
+            }
             cont = false;
         }
+        close(sfd);
     } else {
         const std::string shell_path = "/bin/bash"; //getenv("SHELL");
         const std::string shell_name = get_shell_name(shell_path);
