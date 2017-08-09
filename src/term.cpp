@@ -70,8 +70,7 @@ bool talk_to_shell(int master, stdio_fd_set const& fds) {
 std::experimental::optional<unsigned char> parse_stdin(unsigned char buf) {
     switch (buf) {
         case 'Q':
-            kill(shell_pid, SIGINT);
-            return {};
+            return static_cast<unsigned char>(3);
         default:
             return buf;
     }
