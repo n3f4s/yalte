@@ -20,8 +20,61 @@ namespace linux {
         escape = 27,
     }; // Not really usefull
 
-    void chdir(const std::string& path) {
-        chdir(path.c_str());
+    enum class Error : unsigned {
+        EPERM   = 1,
+        ENOENT  = 2,
+        ESRCH   = 3,
+        EINTR   = 4,
+        EIO     = 5,
+        ENXIO   = 6,
+        E2BIG   = 7,
+        ENOEXEC = 8,
+        EBADF   = 9,
+        ECHILD  = 10,
+        EAGAIN  = 11,
+        ENOMEM  = 12,
+        EACCES  = 13,
+        EFAULT  = 14,
+        ENOTBLK = 15,
+        EBUSY   = 16,
+        EEXIST  = 17,
+        EXDEV   = 18,
+        ENODEV  = 19,
+        ENOTDIR = 20,
+        EISDIR  = 21,
+        EINVAL  = 22,
+        ENFILE  = 23,
+        EMFILE  = 24,
+        ENOTTY  = 25,
+        ETXTBSY = 26,
+        EFBIG   = 27,
+        ENOSPC  = 28,
+        ESPIPE  = 29,
+        EROFS   = 30,
+        EMLINK  = 31,
+        EPIPE   = 32,
+        EDOM    = 33,
+        ERANGE  = 34,
+        OK      = 35
+    };
+
+    Error errno_to_enum() {
+      static Error errors[] =
+        { Error::EPERM   , Error::ENOENT , Error::ESRCH  , Error::EINTR , Error::EIO,
+          Error::ENXIO   , Error::E2BIG  , Error::ENOEXEC, Error::EBADF , Error::ECHILD,
+          Error::EAGAIN  , Error::ENOMEM , Error::EACCES , Error::EFAULT, Error::ENOTBLK,
+          Error::EBUSY   , Error::EEXIST , Error::EXDEV  , Error::ENODEV, Error::ENOTDIR,
+          Error::EISDIR  , Error::EINVAL , Error::ENFILE , Error::EMFILE, Error::ENOTTY,
+          Error::ETXTBSY , Error::EFBIG  , Error::ENOSPC , Error::ESPIPE, Error::EROFS,
+          Error::EMLINK  , Error::EPIPE  , Error::EDOM   , Error::ERANGE, Error::OK };
+        return errors[errno];
+    }
+
+    Error chdir(const std::string& path) {
+        if(chdir(path.c_str()) == -1) {
+            return errno_to_enum();
+        }
+        return Error::OK;
     }
     using std::experimental::optional;
     optional<std::string> getenv(const std::string& env) {
