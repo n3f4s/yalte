@@ -21,60 +21,60 @@ namespace linux {
     }; // Not really usefull
 
     enum class Error : unsigned {
-        EPERM   = 1,
-        ENOENT  = 2,
-        ESRCH   = 3,
-        EINTR   = 4,
-        EIO     = 5,
-        ENXIO   = 6,
-        E2BIG   = 7,
-        ENOEXEC = 8,
-        EBADF   = 9,
-        ECHILD  = 10,
-        EAGAIN  = 11,
-        ENOMEM  = 12,
-        EACCES  = 13,
-        EFAULT  = 14,
-        ENOTBLK = 15,
-        EBUSY   = 16,
-        EEXIST  = 17,
-        EXDEV   = 18,
-        ENODEV  = 19,
-        ENOTDIR = 20,
-        EISDIR  = 21,
-        EINVAL  = 22,
-        ENFILE  = 23,
-        EMFILE  = 24,
-        ENOTTY  = 25,
-        ETXTBSY = 26,
-        EFBIG   = 27,
-        ENOSPC  = 28,
-        ESPIPE  = 29,
-        EROFS   = 30,
-        EMLINK  = 31,
-        EPIPE   = 32,
-        EDOM    = 33,
-        ERANGE  = 34,
-        OK      = 35
+        eperm   = 1,
+        enoent  = 2,
+        esrch   = 3,
+        eintr   = 4,
+        eio     = 5,
+        enxio   = 6,
+        e2big   = 7,
+        enoexec = 8,
+        ebadf   = 9,
+        echild  = 10,
+        eagain  = 11,
+        enomem  = 12,
+        eacces  = 13,
+        efault  = 14,
+        enotblk = 15,
+        ebusy   = 16,
+        eexist  = 17,
+        exdev   = 18,
+        enodev  = 19,
+        enotdir = 20,
+        eisdir  = 21,
+        einval  = 22,
+        enfile  = 23,
+        emfile  = 24,
+        enotty  = 25,
+        etxtbsy = 26,
+        efbig   = 27,
+        enospc  = 28,
+        espipe  = 29,
+        erofs   = 30,
+        emlink  = 31,
+        epipe   = 32,
+        edom    = 33,
+        erange  = 34,
+        ok      = 35
     };
 
     Error errno_to_enum() {
       static Error errors[] =
-        { Error::EPERM   , Error::ENOENT , Error::ESRCH  , Error::EINTR , Error::EIO,
-          Error::ENXIO   , Error::E2BIG  , Error::ENOEXEC, Error::EBADF , Error::ECHILD,
-          Error::EAGAIN  , Error::ENOMEM , Error::EACCES , Error::EFAULT, Error::ENOTBLK,
-          Error::EBUSY   , Error::EEXIST , Error::EXDEV  , Error::ENODEV, Error::ENOTDIR,
-          Error::EISDIR  , Error::EINVAL , Error::ENFILE , Error::EMFILE, Error::ENOTTY,
-          Error::ETXTBSY , Error::EFBIG  , Error::ENOSPC , Error::ESPIPE, Error::EROFS,
-          Error::EMLINK  , Error::EPIPE  , Error::EDOM   , Error::ERANGE, Error::OK };
+        { Error::eperm   , Error::enoent , Error::esrch  , Error::eintr , Error::eio,
+          Error::enxio   , Error::e2big  , Error::enoexec, Error::ebadf , Error::echild,
+          Error::eagain  , Error::enomem , Error::eacces , Error::efault, Error::enotblk,
+          Error::ebusy   , Error::eexist , Error::exdev  , Error::enodev, Error::enotdir,
+          Error::eisdir  , Error::einval , Error::enfile , Error::emfile, Error::enotty,
+          Error::etxtbsy , Error::efbig  , Error::enospc , Error::espipe, Error::erofs,
+          Error::emlink  , Error::epipe  , Error::edom   , Error::erange, Error::ok };
         return errors[errno];
     }
 
     Error chdir(const std::string& path) {
-        if(chdir(path.c_str()) == -1) {
+        if(::chdir(path.c_str()) == -1) {
             return errno_to_enum();
         }
-        return Error::OK;
+        return Error::ok;
     }
     using std::experimental::optional;
     optional<std::string> getenv(const std::string& env) {
