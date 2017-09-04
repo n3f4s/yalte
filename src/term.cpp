@@ -59,12 +59,12 @@ std::ofstream log_out{"./tmp-out.log"};
 
 pid_t shell_pid;
 
-bool talk_to_shell(int master, stdio_fd_set const& fds) {
-    if(!FD::isset(master, fds.read)) return true;
+linux::Error talk_to_shell(int master, stdio_fd_set const& fds) {
+  if(!FD::isset(master, fds.read)) return linux::Error::ok;
     unsigned char buf;
-    if(read(master, &buf, 1) == -1) return false;
-    write(STDOUT_FILENO, &buf, 1);
-    return true;
+    if(read(master, &buf, 1) == -1) return linux::errno_to_enum();
+    if(write(STDOUT_FILENO, &buf, 1) == -1) return linux::errno_to_enum();
+    return linux::Error::ok;
 }
 
 std::experimental::optional<unsigned char> parse_stdin(unsigned char buf) {
@@ -168,7 +168,7 @@ int main()
                 continue;
             }
             // Talk to the shell
-            run = talk_to_shell(master, io_fd);
+            run = talk_to_shell(master, io_fd) == linux::Error::ok;
 
             // Talk to stdin
             run &= talk_to_stdin(master, io_fd);
