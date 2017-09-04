@@ -83,8 +83,9 @@ namespace linux {
         return optional<std::string>{};
     }
     template<typename... T>
-    int execlp(const std::string& cmd, const std::string& path, const T&... args) {
-        return ::execlp(cmd.c_str(), path.c_str(), args..., nullptr);
+    Error execlp(const std::string& cmd, const std::string& path, const T&... args) {
+        const auto ret = ::execlp(cmd.c_str(), path.c_str(), args..., nullptr);
+        return errno_to_enum();
     }
 
     ::termios get_termios(int fd) {
